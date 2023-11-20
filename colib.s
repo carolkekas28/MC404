@@ -86,14 +86,15 @@ gets:
     lb t0, 0(a3)
     li t1, 10
     beq t0, t1, gets_finished # See if we have reached a newline character
+    beqz t0, gets_finished
     addi a3, a3, 1 # If not, move to the next position of our buffer
     j gets_loop
 
     gets_finished:
-    addi a3, a3, 1 # If not, move to the next position of our buffer
-    mv a0, a3
+    addi a3, a3, 1
     li t0, 0
-    sb t0, 0(a0) # We add a null character terminator to the end of our buffer
+    sb t0, 0(a3) # We add a null character terminator to the end of our buffer
+    mv a0, a3
     mv a0, a2 # We recover the begin adress of our buffer
     ret
 
@@ -112,7 +113,7 @@ atoi:
 
     positive_number:
     lbu t1, 0(a0) # Load character
-    beqz t1, positive_over
+    beq t1, t2, positive_over #
     mul t0, t0, t2
     addi t1, t1, -48 # From ASCII to integer
     add t0, t0, t1
@@ -141,7 +142,49 @@ atoi:
 .globl itoa
 itoa:
     # a0: integer value to be converted, a1: buffer to be filled, a2: base 10 or 16
-    mv s0, a1 # To lately recover the begin adress of our buffer
+    mv a3, a1 # We temporarily store the initial adress of our buffer in register a3
+    li t0, 0 # To check if its 0 or negative
+    li t1, 0 # To count number of digits
+    beq t0, a0, convert_to_zero
+    li t2, 16
+    beq t2, a2, convert_to_hexadecimal_number
+    li t2, 10
+    j convert_to_decimal_number
+
+    convert_to_zero:
+    li t0, '0'
+    sb t0, 0(a1)
+    addi a1, a1, 1
+    j adjust_decimal
+
+    convert_to_decimal_number:
+    beqz a0, decimal_conversion_finished
+    remu t0, a0, t2 # t0 <- a0%10
+    addi t0, t0, 48 # From int to ASCII
+    addi sp, sp, -4
+    sw t0, 0(sp) # Store digit in our stack
+    div a0, a0, t2 # a0 <- a0/10
+    addi t1, t1, 1 # Count one more digit
+    j convert_to_decimal_number
+
+    decimal_conversion_finished:
+    beqz t1, adjust_decimal
+    lw t0, 0(sp)
+    addi sp, sp, 4
+    sw t0, 0(a1)
+    addi a1, a1, 1 # Move to the next position of our buffer
+    addi t1, t1, -1 # Loop will continue untill we have store all digits in our buffer
+    j decimal_conversion_finished
+
+    adjust_decimal:
+    li t0, 0
+    sb t0, 0(a1) # Store a null caracter at the end of our buffer
+    mv a0, a3 # We recover the initial adress of our buffer
+    ret
+
+    convert_to_hexadecimal_number:
+    ret
+    /*mv a3, a1 # To lately recover the begin adress of our buffer
     li t0, 10
     beq t0, a2, decimal
     li t0, 16
@@ -193,14 +236,16 @@ itoa:
     adjust_decimal:
     li t0, 0
     sb t0, 0(a1) # Store null caracter at the end of our buffer
-    mv a1, s0 # Recover the begin adress of buffer
+    mv a1, a3 # Recover the begin adress of buffer
     mv a0, a1 # Store it in register a0
     ret
 
     hexadecimal:
-    ret
+    ret*/
+
 
 a1:
+
 
 .globl strlen_custom
 strlen_custom:
