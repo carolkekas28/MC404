@@ -44,7 +44,6 @@ Syscall_set_handbrake:
     li s0, CAR_BASE
     addi s0, s0, 34 # Base+0x22
     sb a0, 0(s0)
-    lw a0, 0(sp)
     j end_interruption
 
 
@@ -75,7 +74,6 @@ Syscall_read_sensors:
 
     capture_image_finished:
     mv a0, a1 # We recover beggin adres of our array
-    lw a0, 0(sp)
     j end_interruption
 
 
@@ -125,7 +123,6 @@ Syscall_get_position:
     sw t0, 0(a0) 
     sw t1, 0(a1)
     sw t2, 0(a2)
-    lw a0, 0(sp)
     j end_interruption
 
 
@@ -151,7 +148,6 @@ Syscall_get_rotation:
     sw t0, 0(a0)
     sw t1, 0(a1)
     sw t2, 0(a2)
-    lw a0, 0(sp)
     j end_interruption
 
 
@@ -162,6 +158,7 @@ Syscall_read_serial:
     li t2, 0 # To count number of bytes that were read
 
     read_loop:
+    beq t2, a1, read_finished # Check if buffer is full
     li t0, 1
     sb t0, 2(s0) # Triggers reading
 
@@ -172,10 +169,9 @@ Syscall_read_serial:
     
     continue_reading:
     lbu t0, 3(s0)
+    sb t0, 0(a0) # Store byte in equivalent position of buffer #KANT ESTEVE AQUI, ESTAVA DEPOIS DAS COMPRAÇÕES
     beqz t0, read_finished # Check if we reached a null caracter
     beq t1, t0, read_finished # Check if we reached a newline caracter
-    beq t2, a1, read_finished # Check if buffer is full
-    sb t0, 0(a0) # Store byte in equivalent position of buffer
     addi a0, a0, 1 # Move to the next position of our buffer
     addi t2, t2, 1 # Increase number of read bytes
     j read_loop
@@ -228,8 +224,8 @@ Syscall_get_systime:
 int_handler:
     csrrw sp, mscratch, sp # Changes sp to mscratch
     addi sp, sp, -40
-    sw a0, 0(sp)
-    sw a1, 4(sp)
+    # sw a0, 0(sp)
+    # sw a1, 4(sp)
     sw a2, 8(sp)
     sw a7, 12(sp)
     sw t0, 16(sp)
@@ -275,7 +271,7 @@ int_handler:
     lw t0, 16(sp)
     lw a7, 12(sp)
     lw a2, 8(sp)
-    lw a1, 4(sp)
+    # lw a1, 4(sp)
     addi sp, sp, 40
 
     csrrw sp, mscratch, sp
@@ -286,10 +282,11 @@ int_handler:
     mret
 
 .globl _start 
-
+.globl main #mudei kant aqui
+ 
 _start:
-    la a0, int_handler 
-    csrw mtvec, a0      
+    li sp, 0x07FFFFFC #kant aqui
+
 
     la a0, STACK_END
     csrw mscratch, a0
@@ -305,13 +302,15 @@ _start:
     ori t1, t1, 0x8
     csrw mstatus, t1
 
+    la a0, int_handler 
+    csrw mtvec, a0      
+
     # Change to user mode
     jal user_main
     jal main
-    jal exit
 
-main:
     ret
+
 
 user_main:
     csrr t1, mstatus # Update the mstatus.MPP
@@ -321,7 +320,3 @@ user_main:
     la t0, main # Loads the user software
     csrw mepc, t0 # entry point into mepc
     mret # PC <= MEPC; mode <= MPP;
-
-exit:
-    li a7, 93
-    ecall
