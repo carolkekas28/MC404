@@ -169,9 +169,9 @@ Syscall_read_serial:
     
     continue_reading:
     lbu t0, 3(s0)
-    sb t0, 0(a0) # Store byte in equivalent position of buffer #KANT ESTEVE AQUI, ESTAVA DEPOIS DAS COMPRAÇÕES
-    beqz t0, read_finished # Check if we reached a null caracter
+    sb t0, 0(a0) # Store byte in equivalent position of buffer
     beq t1, t0, read_finished # Check if we reached a newline caracter
+    beqz t0, read_finished # Check if we reached a null caracter
     addi a0, a0, 1 # Move to the next position of our buffer
     addi t2, t2, 1 # Increase number of read bytes
     j read_loop
@@ -182,13 +182,15 @@ Syscall_read_serial:
 
 
 Syscall_write_serial:
-    # a0: buffer, a1: size
+    # a0: buffer, a1: max number of bytes to write
     li s0, SERIAL_BASE
     li t1, 0 # To count number of iterations
+    li t3, 10
 
     write_loop:
-    lb t0, 0(a0) # Get first caracter of our buffer
-    sb t0, 1(s0) # Store it in serial port base+0x01
+    beq t1, a1, write_finished # Check if we have written max number of bytes
+    lb t2, 0(a0) # Get first caracter of our buffer
+    sb t2, 1(s0) # Store it in serial port base+0x01
 
     li t0, 1
     sb t0, 0(s0) # Triggers serial port to write
@@ -201,7 +203,8 @@ Syscall_write_serial:
     continue_writing:
     addi a0, a0, 1
     addi t1, t1, 1 # Increase number of written bytes
-    blt t1, a1, Syscall_write_serial
+    beq t2, t3, write_finished # Check if we have reached a newline character
+    blt t1, a1, write_loop
 
     write_finished:
     j end_interruption
@@ -220,6 +223,7 @@ Syscall_get_systime:
     procced_GPT_reading:
     lw a0, 4(s0) # Stores the time at the moment of the last reading by GPT
     j end_interruption
+
 
 int_handler:
     csrrw sp, mscratch, sp # Changes sp to mscratch
@@ -282,10 +286,10 @@ int_handler:
     mret
 
 .globl _start 
-.globl main #mudei kant aqui
+.globl main
  
 _start:
-    li sp, 0x07FFFFFC #kant aqui
+    li sp, 0x07FFFFFC
 
 
     la a0, STACK_END
