@@ -1,0 +1,10 @@
+For this activity, I wrote a program in RISC-V assembly language that computes the 
+approximated square root of integers.
+
+INPUT: Four 4-digit decimal numbers separated by spaces (' '), followed by a newline 
+character ('\n'). The whole input takes up 20 bytes.
+
+OUTPUT: For each 4-digit number read, I computed its approximate square root and 
+wrote its value to STDOUT using 4-digits and each square root was separated by a 
+space (' '). The last one is followed by a newline character ('\n'), so the output 
+will also took up 20 bytes.
