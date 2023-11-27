@@ -1,0 +1,8 @@
+In this activity, I wrote a program in RISC-V assembly language that receives a number via STDIN, goes
+through a linked list and prints the index of the node where the sum of the two stored values is equal to the number 
+read from STDIN. In case none of the nodes in the linked list fill this requirement, the number -1 must be printed. 
+
+INPUT: An ASCII encoded decimal number on the interval -10000 and 10000.
+
+OUTPUT: Index of the node where the sum of the two stored values is equal to the received value, if it exists 
+on the linked list, -1 if it does not exist.
