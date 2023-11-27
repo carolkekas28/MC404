@@ -1,0 +1,8 @@
+In this activity, I had to write a program in RISC-V assembly language that has a ABI-compliant function int 
+linked_list_search(Node *head_node, int val), similar to the one implemented in activity 9. My code was
+linked to a code in C that calls the linked_list_search function and expects the return value to be the index of 
+the node where the sum of the values is equal to val  or -1 in case there isn't such a node on the linked list.
+
+INPUT: Test Case index and specific input depending on the test case (check example.c). 
+
+OUTPUT: Output according to the test case.
